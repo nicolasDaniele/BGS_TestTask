@@ -1,6 +1,9 @@
 #include "Player/SkateboardCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Obstacle.h"
+#include "Player/SkateboardPlayerState.h"
 
 ASkateboardCharacter::ASkateboardCharacter()
 {
@@ -21,6 +24,8 @@ void ASkateboardCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	forwardInput = 0.0f;
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ASkateboardCharacter::OnCapsuleBeginOverlap);
+	skateboardPlayerState = Cast<ASkateboardPlayerState>(GetPlayerState());
 }
 
 void ASkateboardCharacter::TickActor(float DeltaTime, ELevelTick TickType, FActorTickFunction& ThisTickFunction)
@@ -45,7 +50,6 @@ void ASkateboardCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void ASkateboardCharacter::Move(FVector2D moveVector)
 {
-	// @TODO: Parametrize multiplier
 	AddMovementInput(skateMesh->GetRightVector(), moveVector.X * 0.05f);
 	
 	if(moveVector.Y >= 0.0f)
@@ -55,7 +59,6 @@ void ASkateboardCharacter::Move(FVector2D moveVector)
 	}
 	else
 	{
-		//@TODO: Make Decelarate function. Parametrize Epsilon? Parametrize Alpha?
 		forwardInput = FMath::Abs(forwardInput) > 0.01f ? FMath::Lerp(forwardInput, 0.0f, 0.1f) : 0.0f;
 	}
 }
@@ -76,4 +79,13 @@ void ASkateboardCharacter::Decelerate()
 		GetWorld()->GetTimerManager().ClearTimer(decelerateHandle);
 		forwardInput = 0.0f;
 	}
+}
+
+void ASkateboardCharacter::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult)
+{
+	if(!OtherActor->IsA(AObstacle::StaticClass()) || skateboardPlayerState == nullptr) return;
+	
+	AObstacle* obstacle = Cast<AObstacle>(OtherActor);
+	skateboardPlayerState->AddPlayerScore(obstacle->GetScoreForOvercomingObstacle());
 }

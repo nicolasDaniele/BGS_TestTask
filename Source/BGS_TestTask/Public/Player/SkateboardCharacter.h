@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "SkateboardCharacter.generated.h"
 
+class ASkateboardPlayerState;
 class UBoxComponent;
 class UCameraComponent;
 class USpringArmComponent;
@@ -30,7 +31,11 @@ protected:
 	
 private:
 	void Decelerate();
+	UFUNCTION()
+	void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
 	
 	FTimerHandle decelerateHandle;
 	float forwardInput;
+	TObjectPtr<ASkateboardPlayerState> skateboardPlayerState;
 };
